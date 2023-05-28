@@ -43,6 +43,7 @@ def fit_coefs(
             covariates
         )
 
+        # https://en.wikipedia.org/wiki/Newton%27s_method_in_optimization#Higher_dimensions
         # solve for Ax = b
         # where:
         #  A = hessian,
