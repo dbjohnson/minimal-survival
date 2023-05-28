@@ -152,6 +152,9 @@ class Cox:
         understand.
         """
         def loss_function(coefs):
+            """
+            https://en.wikipedia.org/wiki/Proportional_hazards_model#Likelihood_for_unique_times
+            """            
             log_risk_scores = np.dot(
                 self.df_train[self.covariates],
                 coefs
@@ -159,9 +162,7 @@ class Cox:
             risk_scores = np.exp(log_risk_scores)
 
             def log_partial_likelihood_at_time(t):
-                """
-                https://en.wikipedia.org/wiki/Proportional_hazards_model#Likelihood_for_unique_times
-                """
+
                 event_idx = (
                     (self.df_train[self.timeline_column] == t) &
                     self.df_train[self.event_column]
