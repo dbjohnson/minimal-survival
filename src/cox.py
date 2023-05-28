@@ -106,15 +106,17 @@ def _log_loss_and_derivates(
         n_events = 0
         numerator = 0
         numerator_log_loss = 0
-        while k < n_samples and ti == time[k]:
-            xk = X[k].reshape(1, -1)
-
+        while k < n_samples and time[k] == ti:
+            # partial hazard for sample k
             risk_set += exp_xw[k]
+
+            # covariates for samplea k
+            xk = X[k].reshape(1, -1)
             risk_set_x += exp_xw[k] * xk
             risk_set_xx += exp_xw[k] * np.dot(xk.T, xk)
             if event[k]:
-                numerator_log_loss += xw[k]
-                numerator += xk
+                numerator_log_loss += xw[k]  # log partial hazard for sample k
+                numerator += xk  # covariates for sample k
                 n_events += 1
             k += 1
 
@@ -132,6 +134,6 @@ def _log_loss_and_derivates(
 
     return (
         loss,
-        gradient.ravel(),
+        gradient[0],  # flatten 2d array
         hessian
     )
