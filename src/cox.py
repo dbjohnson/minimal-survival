@@ -16,13 +16,18 @@ def fit_coefs(
     h0(t) is the baseline hazard function
     https://en.wikipedia.org/wiki/Proportional_hazards_model
 
-    use newton's method - we'll need the negative log likelihood function
-    for a given set of weights, and the first and second derivatives
-    (gradient and hessian) of the negative log likelihood function
+    use Newton's method to optimize the coefficients by minimizing the
+    partial log-likelihood, e.g. - the difference between the dot
+    product of the coefficients and the covariates
+    (b1 * x1 + b2 * x2 + ... + bk * xk) and... what??
+
+    We'll need the negative log likelihood function for a given set of weights,
+    and the first and second derivatives (gradient and Hessian) of the
+    negative log likelihood function.
     We use the negative log likelihood because the log likelihood
     is by definition negative (likelihood is in [0, 1], and our optimizer
     is a minimizer
-    # NOTE: we are optimizing for clarity of interpretation, not speed!
+    # NOTE: this implementation aims for clarity of interpretation, not speed!
     """
     w = np.zeros(len(covariates))
     w_prev = w
@@ -89,7 +94,6 @@ def _log_loss_and_derivates(
     gradient = np.zeros((1, n_features))
     hessian = np.zeros((n_features, n_features))
 
-    inv_n_samples = 1. / n_samples
     loss = 0
     risk_set = 0
     risk_set_x = np.zeros((1, n_features))
@@ -102,15 +106,11 @@ def _log_loss_and_derivates(
         numerator = 0
         numerator_log_loss = 0
         while k < n_samples and ti == time[k]:
-            # preserve 2D shape of row vector
-            xk = X[k:k + 1]
-
-            # outer product
-            xx = np.dot(xk.T, xk)
+            xk = X[k].reshape(1, -1)
 
             risk_set += exp_xw[k]
             risk_set_x += exp_xw[k] * xk
-            risk_set_xx += exp_xw[k] * xx
+            risk_set_xx += exp_xw[k] * np.dot(xk.T, xk)
             if event[k]:
                 numerator_log_loss += xw[k]
                 numerator += xk
@@ -118,15 +118,16 @@ def _log_loss_and_derivates(
             k += 1
 
         if n_events > 0:
-            loss -= (numerator_log_loss - n_events * np.log(risk_set)) / n_samples
+            loss -= (
+                numerator_log_loss - n_events * np.log(risk_set)
+            ) / n_samples
             z = risk_set_x / risk_set
-            gradient -= (numerator - n_events * z) * inv_n_samples
+            gradient -= (numerator - n_events * z) / n_samples
 
             a = risk_set_xx / risk_set
-            # outer product
             b = np.dot(z.T, z)
 
-            hessian += n_events * (a - b) * inv_n_samples
+            hessian += n_events * (a - b) / n_samples
 
     return (
         loss,
