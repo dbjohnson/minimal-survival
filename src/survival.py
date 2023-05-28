@@ -1,15 +1,10 @@
+import numpy as np
 import pandas as pd
-
-
-def baseline_survival(*args, **kwargs):
-    """
-    Kaplan-Meier estimator
-    """
-    return kaplan_meier(*args, **kwargs)
 
 
 def kaplan_meier(df, timeline_column, event_column):
     """
+    Kaplan-Meier estimator of survivor function
     https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator
     """
     return _event_table(df, timeline_column, event_column).apply(
@@ -20,11 +15,18 @@ def kaplan_meier(df, timeline_column, event_column):
 
 def cumulative_hazard(df, timeline_column, event_column):
     """
-    Nelson-Allen estimator
+    Nelson-Aalen estimator of cumulative hazard function
     https://lifelines.readthedocs.io/en/latest/Survival%20analysis%20with%20lifelines.html#estimating-hazard-rates-using-nelson-aalen
     """
     dfe = _event_table(df, timeline_column, event_column)
     return (dfe['events'] / dfe['at_risk']).cumsum()
+
+
+def breslow(df, timeline_column, event_column):
+    """
+    Breslow estimator of survivor function
+    """
+    return np.exp(-cumulative_hazard(df, timeline_column, event_column))
 
 
 def _event_table(df, timeline_column, event_column):
