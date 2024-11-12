@@ -40,8 +40,4 @@ def _event_table(df, timeline_column, event_column):
         'time': 0,
         'events': 0,
         'at_risk': len(df)
-    }]).pivot_table(
-        index='time',
-        values=['events', 'at_risk'],
-        aggfunc=sum
-    ).sort_index()
+    }]).set_index('time').sort_index()
